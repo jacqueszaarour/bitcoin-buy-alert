@@ -2,6 +2,15 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 
 (async () => {
+    // Check if today is Monday
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+
+    if (dayOfWeek !== 1) {
+        console.log('Today is not Monday. Exiting.');
+        return;
+    }
+
     // Fetch current Bitcoin price
     async function fetchCurrentPrice() {
         try {
@@ -46,19 +55,31 @@ const nodemailer = require('nodemailer');
     // Calculate dip percentage and investment amount
     function calculateInvestment(currentPrice, monthlyHigh) {
         const dipPercentage = ((monthlyHigh - currentPrice) / monthlyHigh) * 100;
-        if (dipPercentage >= 30) return { amount: 1500, dipPercentage };
-        if (dipPercentage >= 20) return { amount: 1000, dipPercentage };
-        if (dipPercentage >= 10) return { amount: 500, dipPercentage };
-        return { amount: 0, dipPercentage };
+        let additionalAmount = 0;
+
+        if (dipPercentage >= 20) {
+            additionalAmount = 600;
+        } else if (dipPercentage >= 10) {
+            additionalAmount = 400;
+        } else if (dipPercentage >= 5) {
+            additionalAmount = 200;
+        } else {
+            additionalAmount = 0;
+        }
+
+        const baseAmount = 200;
+        let totalAmount = baseAmount + additionalAmount;
+
+        // Apply weekly cap of $1,000
+        if (totalAmount > 1000) {
+            totalAmount = 1000;
+        }
+
+        return { amount: totalAmount, dipPercentage, additionalAmount };
     }
 
     // Send email notification
-    async function sendEmail(amount, dipPercentage, currentPrice) {
-        if (amount === 0) {
-            console.log('No significant dip detected. No email sent.');
-            return;
-        }
-
+    async function sendEmail(amount, dipPercentage, currentPrice, additionalAmount, monthlyHigh) {
         let transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -68,10 +89,21 @@ const nodemailer = require('nodemailer');
         });
 
         let mailOptions = {
-            from: '"Bitcoin Buy Alert" <' + process.env.EMAIL_USER + '>',
+            from: '"Bitcoin Investment Alert" <' + process.env.EMAIL_USER + '>',
             to: process.env.EMAIL_TO,
-            subject: 'Bitcoin Buy Alert',
-            text: `Bitcoin has dipped ${dipPercentage.toFixed(2)}% from the monthly high.\nCurrent Price: $${currentPrice.toFixed(2)}\nSuggested Investment: $${amount}\n\nIt's time to buy according to your strategy!`,
+            subject: 'Bitcoin Weekly Investment Alert',
+            text: `Weekly Bitcoin Investment Plan:
+
+Current Price: $${currentPrice.toFixed(2)}
+Monthly High: $${monthlyHigh.toFixed(2)}
+Dip Percentage from Monthly High: ${dipPercentage.toFixed(2)}%
+
+Base Investment: $200
+Additional Investment due to Dip: $${additionalAmount}
+
+Total Suggested Investment for this Week: $${amount}
+
+Time to execute your weekly investment according to your strategy!`,
         };
 
         try {
@@ -88,11 +120,14 @@ const nodemailer = require('nodemailer');
         fetchMonthlyHigh(),
     ]);
 
-    const { amount, dipPercentage } = calculateInvestment(currentPrice, monthlyHigh);
+    const { amount, dipPercentage, additionalAmount } = calculateInvestment(currentPrice, monthlyHigh);
 
     console.log(`Current Price: $${currentPrice}`);
     console.log(`Monthly High: $${monthlyHigh}`);
     console.log(`Dip Percentage: ${dipPercentage.toFixed(2)}%`);
+    console.log(`Base Investment: $200`);
+    console.log(`Additional Investment due to Dip: $${additionalAmount}`);
+    console.log(`Total Investment Amount: $${amount}`);
 
-    await sendEmail(amount, dipPercentage, currentPrice);
+    await sendEmail(amount, dipPercentage, currentPrice, additionalAmount, monthlyHigh);
 })();
