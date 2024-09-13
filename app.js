@@ -6,10 +6,6 @@ const nodemailer = require('nodemailer');
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
 
-    if (dayOfWeek !== 1) {
-        console.log('Today is not Monday. Exiting.');
-        return;
-    }
 
     // Fetch current Bitcoin price
     async function fetchCurrentPrice() {
