@@ -48,7 +48,7 @@ const nodemailer = require('nodemailer');
         const dipPercentage = ((monthlyHigh - currentPrice) / monthlyHigh) * 100;
         if (dipPercentage >= 30) return { amount: 1500, dipPercentage };
         if (dipPercentage >= 20) return { amount: 1000, dipPercentage };
-        if (dipPercentage >= 5) return { amount: 500, dipPercentage };
+        if (dipPercentage >= 10) return { amount: 500, dipPercentage };
         return { amount: 0, dipPercentage };
     }
 
