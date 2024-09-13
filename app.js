@@ -2,10 +2,6 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 
 (async () => {
-    // Check if today is Monday
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
-
 
     // Fetch current Bitcoin price
     async function fetchCurrentPrice() {
@@ -87,19 +83,22 @@ const nodemailer = require('nodemailer');
         let mailOptions = {
             from: '"Bitcoin Investment Alert" <' + process.env.EMAIL_USER + '>',
             to: process.env.EMAIL_TO,
-            subject: 'Bitcoin Weekly Investment Alert',
+            subject: `Bitcoin Weekly Investment: $${amount}`,
             text: `Weekly Bitcoin Investment Plan:
 
 Current Price: $${currentPrice.toFixed(2)}
 Monthly High: $${monthlyHigh.toFixed(2)}
 Dip Percentage from Monthly High: ${dipPercentage.toFixed(2)}%
 
-Base Investment: $200
+Base: $200
+5% or more	+$200
+10% or more	+$400
+20% or more	+$600
+
 Additional Investment due to Dip: $${additionalAmount}
 
-Total Suggested Investment for this Week: $${amount}
-
-Time to execute your weekly investment according to your strategy!`,
+Total for this Week: $${amount}
+`,
         };
 
         try {
